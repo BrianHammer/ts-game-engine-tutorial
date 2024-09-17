@@ -117,76 +117,162 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"src/Engine.ts":[function(require,module,exports) {
+})({"src/core/gl/gl.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.GLUtilities = exports.gl = void 0;
+var GLUtilities = /** @class */function () {
+  function GLUtilities() {}
+  /**
+   * Responsible for setting up webGL
+   * @param elementId Optional. The ID to find in the html
+   * @returns
+   */
+  GLUtilities.initialize = function (elementId) {
+    var canvas;
+    if (elementId !== undefined) {
+      canvas = document.getElementById(elementId);
+      if (canvas == undefined) {
+        throw new Error("[GLUTILITIES_INITIALIZE] Cannot find the element with an id of \"".concat(elementId, "\""));
+      }
+    } else {
+      canvas = document.createElement("canvas");
+      document.body.appendChild(canvas);
+    }
+    exports.gl = canvas.getContext("webgl");
+    if (exports.gl == undefined) {
+      throw new Error("[GLUTIL_INITIALIZE] Unable to initialize webGL");
+    }
+    return canvas;
+  };
+  return GLUtilities;
+}();
+exports.GLUtilities = GLUtilities;
+},{}],"src/core/gl/shader.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Shader = void 0;
+var gl_1 = require("./gl");
+var Shader = /** @class */function () {
+  /**
+   * Creates a new shader
+   * @param name Name of the shader
+   * @param vertexSource The source of the vertex shader
+   * @param fragmentSource the source of the fragment shaders
+   */
+  function Shader(name, vertexSource, fragmentSource) {
+    this._name = name;
+    var vertexShader = this.loadShader(vertexSource, gl_1.gl.VERTEX_SHADER);
+    var fragmentShader = this.loadShader(fragmentSource, gl_1.gl.FRAGMENT_SHADER);
+    this.createProgram(vertexShader, fragmentShader);
+  }
+  Object.defineProperty(Shader.prototype, "name", {
+    get: function get() {
+      return this._name;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  /**
+   * Use this shader.
+   */
+  Shader.prototype.use = function () {
+    gl_1.gl.useProgram(this._program);
+  };
+  Shader.prototype.loadShader = function (source, shaderType) {
+    var shader = gl_1.gl.createShader(shaderType);
+    gl_1.gl.shaderSource(shader, source);
+    gl_1.gl.compileShader(shader);
+    var error = gl_1.gl.getShaderInfoLog(shader);
+    if (error != "") {
+      throw new Error("[SHADER_LOADSHADER] Error compiling the \"".concat(this._name, "\" shader: ").concat(error));
+    }
+    return shader;
+  };
+  Shader.prototype.createProgram = function (vertexShader, fragmentShader) {
+    this._program = gl_1.gl.createProgram();
+    gl_1.gl.attachShader(this._program, vertexShader);
+    gl_1.gl.attachShader(this._program, fragmentShader);
+    gl_1.gl.linkProgram(this._program);
+    var error = gl_1.gl.getProgramInfoLog(this._program);
+    if (error) {
+      throw new Error("[SHADER_CREATEPROGRAM] Error creating the program ".concat(this._name, ": \"").concat(error, "\""));
+    }
+  };
+  return Shader;
+}();
+exports.Shader = Shader;
+},{"./gl":"src/core/gl/gl.ts"}],"src/core/Engine.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Engine = void 0;
+var gl_1 = require("./gl/gl");
+var shader_1 = require("./gl/shader");
 var Engine = /** @class */function () {
   function Engine() {
-    this._count = 0;
     console.log("Hello");
   }
   Engine.prototype.start = function () {
+    this._canvas = gl_1.GLUtilities.initialize();
+    gl_1.gl.clearColor(0, 0, 0, 1);
+    this.loadShaders();
+    this._shader.use();
+    this.resize();
     this.loop();
+  };
+  /**
+   * Resizes the canvas to fit the window
+   */
+  Engine.prototype.resize = function () {
+    if (this._canvas == undefined) return;
+    this._canvas.width = window.innerWidth;
+    this._canvas.height = window.innerHeight;
   };
   /**
    * z
    */
   Engine.prototype.loop = function () {
-    this._count++;
-    document.title = this._count.toString();
+    gl_1.gl.clear(gl_1.gl.COLOR_BUFFER_BIT);
     requestAnimationFrame(this.loop.bind(this));
+  };
+  Engine.prototype.loadShaders = function () {
+    // This language is called GLSL, and it interacts with the GPU
+    // Another way to write the glPos... gl_Position = vec4(a_position.x, a_position.y, a_position.z, 1.0)
+    var vertexShaderSource = "\n    attribute vec3 a_position;\n    void main() {\n        gl_Position = vec4(a_position, 1.0);\n    }\n    ";
+    // This shader specifies colors
+    // precision specifies how accurate the floats will be
+    // Colors are vectors, r,g,b,a?
+    var fragmentShaderSource = "\n    precision mediump float;\n\n    void main() {\n      gl_FragColor = vec4(1.0);\n    }\n    ";
+    this._shader = new shader_1.Shader("basic", vertexShaderSource, fragmentShaderSource);
   };
   return Engine;
 }();
 exports.Engine = Engine;
-},{}],"src/app.ts":[function(require,module,exports) {
+},{"./gl/gl":"src/core/gl/gl.ts","./gl/shader":"src/core/gl/shader.ts"}],"src/app.ts":[function(require,module,exports) {
 "use strict";
 
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  var desc = Object.getOwnPropertyDescriptor(m, k);
-  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-    desc = {
-      enumerable: true,
-      get: function get() {
-        return m[k];
-      }
-    };
-  }
-  Object.defineProperty(o, k2, desc);
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  __setModuleDefault(result, mod);
-  return result;
-};
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var TSE = __importStar(require("./Engine"));
+var Engine_1 = require("./core/Engine");
+var engine;
 window.onload = function () {
-  var e = new TSE.Engine();
-  e.start();
-  console.log("starting");
+  engine = new Engine_1.Engine();
+  engine.start();
 };
-},{"./Engine":"src/Engine.ts"}],"../../../../.nvm/versions/node/v20.16.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+window.onresize = function () {
+  engine.resize();
+};
+},{"./core/Engine":"src/core/Engine.ts"}],"../../../../.nvm/versions/node/v20.16.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -211,7 +297,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "42187" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "44069" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

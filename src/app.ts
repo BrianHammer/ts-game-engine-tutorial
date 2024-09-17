@@ -1,7 +1,12 @@
-import * as TSE from "./Engine";
+import { Engine } from "./core/Engine";
+
+var engine: Engine;
 
 window.onload = function () {
-  let e = new TSE.Engine();
-  e.start();
-  console.log("starting");
+  engine = new Engine();
+  engine.start();
+};
+
+window.onresize = function () {
+  engine.resize();
 };
