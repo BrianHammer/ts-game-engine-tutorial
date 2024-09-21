@@ -3,6 +3,8 @@ import { gl } from "./gl";
 export class Shader {
   private _name: string;
   private _program: WebGLProgram;
+  private _attributes: { [name: string]: number } = {};
+  private _uniforms: { [name: string]: WebGLUniformLocation } = {};
 
   /**
    * Creates a new shader
@@ -20,6 +22,9 @@ export class Shader {
     let fragmentShader = this.loadShader(fragmentSource, gl.FRAGMENT_SHADER);
 
     this.createProgram(vertexShader, fragmentShader);
+
+    this.detectAttributes();
+    this.detectUniforms();
   }
 
   public get name(): string {
@@ -48,6 +53,37 @@ export class Shader {
     return shader;
   }
 
+  /**
+   * Gets the location of the attribute
+   * @param name the name of the attribute location. Throws error if it does not exist
+   * @returns The location of the name passed into the function
+   */
+  public getAttributeLocation(name: string): number {
+    const attr = this._attributes[name];
+    if (attr === undefined) {
+      throw new Error(
+        `[SHADER_GETATTRLOCATION] Unable to find attribute "${name}" inside of shader ${this._name}`
+      );
+    }
+
+    return attr;
+  }
+
+  /**
+   * Gets the location of the unifrom
+   * @param name the name of the attribute location. Throws error if it does not exist
+   * @returns The location of the name passed into the function
+   */
+  public getUniformLocation(name: string): WebGLUniformLocation {
+    const attr = this._uniforms[name];
+    if (attr === undefined) {
+      throw new Error(
+        `[SHADER_GETUNIFORMLOCATION] Unable to find uniform "${name}" inside of shader ${this._name}`
+      );
+    }
+    return attr;
+  }
+
   private createProgram(
     vertexShader: WebGLShader,
     fragmentShader: WebGLShader
@@ -64,6 +100,44 @@ export class Shader {
     if (error) {
       throw new Error(
         `[SHADER_CREATEPROGRAM] Error creating the program ${this._name}: "${error}"`
+      );
+    }
+  }
+
+  private detectAttributes(): void {
+    let attributeCount = gl.getProgramParameter(
+      this._program,
+      gl.ACTIVE_ATTRIBUTES
+    );
+    for (let i = 0; i < attributeCount; i++) {
+      let info: WebGLActiveInfo = gl.getActiveAttrib(this._program, i);
+
+      if (!info) {
+        break;
+      }
+
+      this._attributes[info.name] = gl.getAttribLocation(
+        this._program,
+        info.name
+      );
+    }
+  }
+
+  private detectUniforms(): void {
+    let uniformCount = gl.getProgramParameter(
+      this._program,
+      gl.ACTIVE_UNIFORMS
+    );
+    for (let i = 0; i < uniformCount; i++) {
+      let info: WebGLActiveInfo = gl.getActiveUniform(this._program, i);
+
+      if (!info) {
+        break;
+      }
+
+      this._uniforms[info.name] = gl.getUniformLocation(
+        this._program,
+        info.name
       );
     }
   }
