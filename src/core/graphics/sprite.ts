@@ -10,7 +10,7 @@ export class Sprite {
 
   public position: Vector3 = new Vector3();
 
-  public constructor(name: string, width: number = 50, height: number = 50) {
+  public constructor(name: string, width: number = 100, height: number = 100) {
     this._height = height;
     this._width = width;
     this._name = name;
@@ -74,19 +74,19 @@ export class Sprite {
     const Ay = this._height * 0.5;
     const Ax = 0;
 
-    const Bx = this._width * 0.3333;
+    const Bx = this._width * 0.25;
     const By = this._height;
 
-    const Cx = this._width * 0.6666;
+    const Cx = this._width * 0.75;
     const Cy = this._height;
 
     const Dx = this._width;
     const Dy = this._height * 0.5;
 
-    const Ex = this._width * 0.6666;
+    const Ex = this._width * 0.75;
     const Ey = 0;
 
-    const Fx = this._width * 0.3333;
+    const Fx = this._width * 0.25;
     const Fy = 0;
 
     // ABF, BCF, CEF, CDE

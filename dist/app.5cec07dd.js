@@ -485,10 +485,10 @@ var vector3_1 = require("../math/vector3");
 var Sprite = /** @class */function () {
   function Sprite(name, width, height) {
     if (width === void 0) {
-      width = 50;
+      width = 100;
     }
     if (height === void 0) {
-      height = 50;
+      height = 100;
     }
     this.position = new vector3_1.Vector3();
     this._height = height;
@@ -532,15 +532,15 @@ var Sprite = /** @class */function () {
     // A starts at the leftmost point, and goes clockwise to the next.
     var Ay = this._height * 0.5;
     var Ax = 0;
-    var Bx = this._width * 0.3333;
+    var Bx = this._width * 0.25;
     var By = this._height;
-    var Cx = this._width * 0.6666;
+    var Cx = this._width * 0.75;
     var Cy = this._height;
     var Dx = this._width;
     var Dy = this._height * 0.5;
-    var Ex = this._width * 0.6666;
+    var Ex = this._width * 0.75;
     var Ey = 0;
-    var Fx = this._width * 0.3333;
+    var Fx = this._width * 0.25;
     var Fy = 0;
     // ABF, BCF, CEF, CDE
     var verticies = [
